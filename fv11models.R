@@ -75,4 +75,7 @@ levels(poldata$hinc)<-c(levels(FV11$hinc)[2],levels(FV11$hinc)[3:11],levels(FV11
 
 predictions<-data.frame(RESPID=poldata$RESPID,redprediction=predict(mred,newdata=poldata,type="response"),blueprediction=predict(mblue,newdata=poldata,type="response"),swingprediction=predict(mswing,newdata=poldata,type="response"))
 
+ggplot(predictions,aes(x=swingprediction)) +
+  geom_histogram()
+
 write.csv(predictions,file="predictions.csv")
