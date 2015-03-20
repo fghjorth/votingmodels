@@ -1,4 +1,8 @@
-FV11.a<-read.csv(file="/Users/frederikhjorth/Dropbox/Data/ElectionStudy-2011/ElectionStudy-2011_F1.csv",sep=",")
+#mac
+#FV11.a<-read.csv(file="/Users/frederikhjorth/Dropbox/Data/ElectionStudy-2011/ElectionStudy-2011_F1.csv",sep=",")
+#pc
+FV11.a<-read.csv(file="C:/Users/fh/Dropbox/Data/ElectionStudy-2011/ElectionStudy-2011_F1.csv",sep=",")
+
 
 #get vars
 FV11<-data.frame(elec=rep("FV11",nrow(FV11.a)))
@@ -60,8 +64,15 @@ ggplot(agepreds,aes(x=age,y=swingpredict,group=edu,color=edu)) +
   theme_minimal()
 
 #read in agenda data
-setwd("~/GitHub/votingmodels")
-poldata<-read.csv("poldata.csv")
+setwd("~/GitHub/votingmodels") 
+
+poldata1<-read.csv("poldata.csv")
+poldata2<-read.csv("poldata2.csv",sep=";")[,c(1:6,8:19)]
+
+names(poldata1)
+names(poldata2)<-names(poldata1)
+
+poldata<-rbind(poldata1,poldata2)
 
 #recode variables to fit
 poldata$female<-ifelse(poldata$gender=="Kvinde",1,0)
@@ -69,7 +80,8 @@ names(poldata)[14]<-"edu"
 names(poldata)[16]<-"hinc"
 
 levels(FV11$edu)
-levels(poldata$edu)<-c("Anden/Vil ikke svare","EUD","Grundskole","Gymnasie","KVU","LVU","MVU","Anden/Vil ikke svare")
+levels(poldata$edu)
+levels(poldata$edu)<-c("Anden/Vil ikke svare","EUD","Grundskole","Gymnasie","KVU","LVU","MVU","Anden/Vil ikke svare","KVU","LVU","MVU")
 
 levels(poldata$hinc)<-c(levels(FV11$hinc)[2],levels(FV11$hinc)[3:11],levels(FV11$hinc)[1],levels(FV11$hinc)[12],levels(FV11$hinc)[12])
 
