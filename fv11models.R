@@ -45,6 +45,10 @@ FV11$safeblue<-ifelse(FV11$leftvot.p==0 & FV11$leftvot.c==0,1,0)
 FV11$safered<-ifelse(FV11$leftvot.p==1 & FV11$leftvot.c==1,1,0)
 FV11$swingvoter<-(FV11$leftvot.p - FV11$leftvot.c)^2
 
+#decided after jan 1st?
+FV11$latedecider<-ifelse(FV11.a$v55<4,1,0)
+
+#decide late AND
 
 rm(FV11.a)
 str(FV11)
@@ -53,13 +57,22 @@ str(FV11)
 summary(mblue<-glm(safeblue~female+age+I(age^2)+edu+hinc,data=FV11,family="binomial"))
 summary(mred<-glm(safered~female+age+I(age^2)+edu+hinc,data=FV11,family="binomial"))
 summary(mswing<-glm(swingvoter~female+age+I(age^2)+edu+hinc,data=FV11,family="binomial"))
+summary(mlatedec<-glm(latedecider~female+age+I(age^2)+edu+hinc,data=FV11,family="binomial"))
 
-agepreds<-as.data.frame(expand.grid(age=18:80,female=0,edu=levels(factor(FV11$edu)),hinc="400k-499k"))
 
-agepreds$swingpredict<-predict(mswing,newdata=agepreds,type="response")
+ageedupreds<-as.data.frame(expand.grid(age=18:80,female=0,edu=levels(factor(FV11$edu)),hinc="400k-499k"))
+
+ageedupreds$swingpredict<-predict(mswing,newdata=ageedupreds,type="response")
+
+ageedupreds$latedecidepredict<-predict(mlatedec,newdata=ageedupreds,type="response")
+
 
 require(ggplot2)
-ggplot(agepreds,aes(x=age,y=swingpredict,group=edu,color=edu)) +
+ggplot(ageedupreds,aes(x=age,y=swingpredict,group=edu,color=edu)) +
+  geom_line() +
+  theme_minimal()
+
+ggplot(ageedupreds,aes(x=age,y=latedecidepredict,group=edu,color=edu)) +
   geom_line() +
   theme_minimal()
 
@@ -85,9 +98,12 @@ levels(poldata$edu)<-c("Anden/Vil ikke svare","EUD","Grundskole","Gymnasie","KVU
 
 levels(poldata$hinc)<-c(levels(FV11$hinc)[2],levels(FV11$hinc)[3:11],levels(FV11$hinc)[1],levels(FV11$hinc)[12],levels(FV11$hinc)[12])
 
-predictions<-data.frame(RESPID=poldata$RESPID,redprediction=predict(mred,newdata=poldata,type="response"),blueprediction=predict(mblue,newdata=poldata,type="response"),swingprediction=predict(mswing,newdata=poldata,type="response"))
+predictions<-data.frame(RESPID=poldata$RESPID,redprediction=predict(mred,newdata=poldata,type="response"),blueprediction=predict(mblue,newdata=poldata,type="response"),swingprediction=predict(mswing,newdata=poldata,type="response"),latedecprediction=predict(mlatedec,newdata=poldata,type="response"))
 
 ggplot(predictions,aes(x=swingprediction)) +
+  geom_histogram()
+
+ggplot(predictions,aes(x=latedecprediction)) +
   geom_histogram()
 
 write.csv(predictions,file="predictions.csv")
