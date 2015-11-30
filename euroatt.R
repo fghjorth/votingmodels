@@ -1,7 +1,7 @@
 #load original data sets
 require(foreign)
-#setwd("C:/Users/fh/Dropbox/Data") #pc
-setwd("/Users/frederikhjorth/Dropbox/Data") #mac
+setwd("C:/Users/fh/Dropbox/Data") #pc
+#setwd("/Users/frederikhjorth/Dropbox/Data") #mac
 FT94.a<-read.csv(file="ElectionStudy-1994/ElectionStudy-1994_F1.csv",sep=",")
 FT01.a<-read.csv(file="ElectionStudy-2001/ElectionStudy-2001_F1.csv",sep=",")
 FT11.a<-read.csv(file="ElectionStudy-2011/ElectionStudy-2011_F1.csv",sep=",")
@@ -53,13 +53,56 @@ aggd<-bind_rows(select(FT94,eupos,age,female,edu,hinc,lrscale,elecyr),
 
 rm(FT94.a,FT01.a,FT11.a)
 
-summary(m94<-lm(eupos~age+I(age^2)+female+edu+hinc,data=FT94))
-summary(m94b<-lm(eupos~age+I(age^2)+female+edu+hinc+lrscale+I(lrscale^2),data=FT94))
-summary(m11<-lm(eupos~age+I(age^2)+female+edu+hinc,data=FT11))
-summary(m11b<-lm(eupos~age+I(age^2)+female+edu+hinc+lrscale++I(lrscale^2),data=FT11))
+aggd$elecyrfac<-factor(aggd$elecyr)
 
+m94<-lm(eupos~age+I(age^2)+female+edu+hinc,data=FT94)
+m94b<-lm(eupos~age+I(age^2)+female+edu+hinc+lrscale+I(lrscale^2),data=FT94)
+m01<-lm(eupos~age+I(age^2)+female+edu+hinc,data=FT01)
+m01b<-lm(eupos~age+I(age^2)+female+edu+hinc+lrscale++I(lrscale^2),data=FT01)
+m11<-lm(eupos~age+I(age^2)+female+edu+hinc,data=FT11)
+m11b<-lm(eupos~age+I(age^2)+female+edu+hinc+lrscale++I(lrscale^2),data=FT11)
+# 
 require(stargazer)
+# 
+stargazer(m94,m01,m11,style="apsr",type="text",column.labels = c("1994","2001","2011"))
+stargazer(m94b,m01b,m11b,style="apsr",type="text",column.labels = c("1994","2001","2011"))
 
-stargazer(m94,m94b,m11,m11b,style="apsr",type="text",column.labels = c("1994","1994","2011","2011"))
+setwd("~/GitHub/votingmodels")
+stargazer(m94,m01,m11,style="apsr",type="text",column.labels = c("1994","2001","2011"),covariate.labels = c("Alder","Alder sq.","Kvinde","Uddannelse","Husstandsindkomst","Konstant"),dep.var.labels = "Støtte til EU") %>%
+  writeLines(.,con="r2models.txt")
 
-?"stargazer"
+require(lme4)
+
+aem<-lm(eupos~edu*elecyrfac,data=aggd)
+alm<-lm(eupos~lrscale*elecyrfac,data=aggd)
+aelm<-lm(eupos~female+age+edu*elecyrfac+lrscale*elecyrfac+I(lrscale^2)*elecyrfac,data=aggd)
+summary(aem)
+summary(alm)
+summary(aelm)
+
+edupreds<-as.data.frame(expand.grid(female=1,age=47,edu=seq(from=0,to=1,by=.05),elecyrfac=levels(aggd$elecyrfac),lrscale=.5))
+edupreds$fit<-predict(aelm,newdata=edupreds,se.fit=T)$fit
+edupreds$se<-predict(aelm,newdata=edupreds,se.fit=T)$se.fit
+edupreds$var<-"Uddannelse"
+
+lrpreds<-as.data.frame(expand.grid(female=1,age=47,lrscale=seq(from=0,to=1,by=.05),elecyrfac=levels(aggd$elecyrfac),edu=.5))
+lrpreds$fit<-predict(aelm,newdata=lrpreds,se.fit=T)$fit
+lrpreds$se<-predict(aelm,newdata=lrpreds,se.fit=T)$se.fit
+lrpreds$var<-"V/H-placering"
+
+preds<-bind_rows(edupreds,lrpreds) %>%
+  mutate(ivar=ifelse(var=="Uddannelse",edu,lrscale))
+
+
+require(ggplot2)
+
+ggplot(preds,aes(x=ivar,y=fit)) +
+  geom_line() +
+  geom_ribbon(aes(ymin=fit-1.96*se,ymax=fit+1.96*se),alpha=.2) +
+  geom_ribbon(aes(ymin=fit-1.65*se,ymax=fit+1.65*se),alpha=.2) +
+  theme_bw() +
+  facet_grid(var~elecyrfac,scales="free_y") +
+  labs(x="Forklarende variabel",y="Støtte til EU") +
+  scale_x_continuous(breaks=0:1,labels=c("Min","Max"))
+
+ggsave(file="eugrid.png",width=7,height=5)
