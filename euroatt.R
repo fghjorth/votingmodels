@@ -1,7 +1,7 @@
 #load original data sets
 require(foreign)
-setwd("C:/Users/fh/Dropbox/Data") #pc
-#setwd("/Users/frederikhjorth/Dropbox/Data") #mac
+#setwd("C:/Users/fh/Dropbox/Data") #pc
+setwd("/Users/frederikhjorth/Dropbox/Data") #mac
 FT94.a<-read.csv(file="ElectionStudy-1994/ElectionStudy-1994_F1.csv",sep=",")
 FT01.a<-read.csv(file="ElectionStudy-2001/ElectionStudy-2001_F1.csv",sep=",")
 FT11.a<-read.csv(file="ElectionStudy-2011/ElectionStudy-2011_F1.csv",sep=",")
@@ -68,7 +68,10 @@ stargazer(m94,m01,m11,style="apsr",type="text",column.labels = c("1994","2001","
 stargazer(m94b,m01b,m11b,style="apsr",type="text",column.labels = c("1994","2001","2011"))
 
 setwd("~/GitHub/votingmodels")
-stargazer(m94,m01,m11,style="apsr",type="text",column.labels = c("1994","2001","2011"),covariate.labels = c("Alder","Alder sq.","Kvinde","Uddannelse","Husstandsindkomst","Konstant"),dep.var.labels = "Støtte til EU") %>%
+stargazer(m94,m01,m11,style="apsr",type="text",column.labels = c("1994","2001","2011"),covariate.labels = c("Alder","Alder sq.","Kvinde","Uddannelse","Husstandsindkomst","Konstant"),dep.var.labels = "Støtte til EU",omit.stat=c("f","ser")) 
+
+
+%>%
   writeLines(.,con="r2models.txt")
 
 require(lme4)
